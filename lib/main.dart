@@ -22,6 +22,7 @@ class App extends StatelessWidget {
 
 class HomePage extends StatefulWidget {
   var items = new List<Item>();
+  var loading = true;
 
   HomePage() {
     items = [];
@@ -38,24 +39,27 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
  var newTaskCtrl = TextEditingController();
  
-  void add(){
+  Future add() async {
     if (newTaskCtrl.text.isEmpty) return;
+    var i;
+    var title;
 
-    setState(() {
-      widget.items.add(
-        Item(
+    setState((){
+      i=Item(
           title: newTaskCtrl.text, 
           done: false,
           objectId: null
-          ),
-        );
-      
-      var itens = ParseObject('Itens');
-      itens.set('title', newTaskCtrl.text);
-	    itens.set('done', false);
-      itens.save();
+          );
+      title=newTaskCtrl.text;
+      widget.items.add(i);
       newTaskCtrl.clear();
     });
+
+    var itens = ParseObject('Itens');
+    itens.set('title', title);
+	  itens.set('done', false);
+    var response = await itens.save();
+    i.objectId=response.result["objectId"];
   }
 
   void remove(int index){
@@ -93,6 +97,7 @@ class _HomePageState extends State<HomePage> {
    
   setState((){
         widget.items = result;
+        widget.loading = false;
   });
   }
 
@@ -122,7 +127,7 @@ class _HomePageState extends State<HomePage> {
           ),
           ),
         ),
-        body: widget.items.length == 0 ? Center(child: CircularProgressIndicator()) : ListView.builder(
+        body: widget.loading ? Center(child: CircularProgressIndicator()) : ListView.builder(
           itemCount: widget.items.length,
           itemBuilder:(BuildContext ctxt, int index){
             final item = widget.items[index];
